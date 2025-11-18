@@ -1,0 +1,25 @@
+teller = 0
+def hanoiPrint(getal,beginlijst, eindlijst):
+    print(f"Schijf {getal} van {beginlijst} naar {eindlijst}")
+    global teller
+    teller += 1
+
+def hanoiHelp(n,beginlist="A",helplist="B",endlist="C"):
+
+    if n == 1:
+        hanoiPrint(1,beginlist,endlist)
+
+    else:
+        hanoiHelp(n-1,beginlist,endlist,helplist)
+        hanoiPrint(n,beginlist,endlist)
+        hanoiHelp(n-1,helplist,beginlist,endlist)
+
+def hanoi(n):
+
+    hanoiHelp(n)
+    print(f"{teller} stappen gedaan")
+
+hanoi(5)
+
+#je moet het op deze manier doen want als je de beginlist,... hard zou maken
+# dan zou je de huidige staat van de volgorde negeren
