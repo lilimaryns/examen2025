@@ -1,1 +1,110 @@
+import random
+class Batch:
+    def __init__(self, quantity, cost_per_unit):
+        self.quantity = quantity
+        self.cost_per_unit = cost_per_unit
 
+    def __str__(self):
+        return f"Batch(quantity={self.quantity}, cost_per_unit={self.cost_per_unit})"
+
+class Product:
+    def __init__(self,product_name,holding_cost,stockout_penalty):
+        self.batches = []
+        self.product_names = product_name
+        self.holding_costs = holding_cost
+        self.stockout_penalty = stockout_penalty
+
+    # Stores an element into the top of the stack
+    def ad_batch(self, quantity, cost_per_unit):
+        new_batch = Batch(quantity, cost_per_unit)
+        self.batches.append(new_batch)
+
+    def fulfill_demand(self, demand):
+        remaining = demand
+
+        # werk als stack: bovenste batch is laatste element
+        while remaining > 0 and self.batches:
+            batch = self.batches[-1]  # bovenste batch
+            if batch.quantity <= remaining:
+                # hele batch opgebruiken
+                remaining -= batch.quantity
+                self.batches.pop()  # of: del self.batches[-1]
+            else:
+                # deel van de batch gebruiken
+                batch.quantity -= remaining
+                remaining = 0
+
+        # als we niet alles konden leveren → stockout_penalty * niet-geleverde eenheden
+        if remaining > 0:
+            return remaining * self.stockout_penalty
+
+        # alles geleverd
+        return 0
+
+    def calculate_holding_cost(self):
+        sum_units = 0
+        for batch in self.batches:
+            sum_units += batch.quantity
+        return sum_units * self.holding_costs
+
+    def __str__(self):
+        result = f"Product {self.product_names}:\n"
+        for batch in reversed(self.batches):
+            result += f"{batch}\n"
+        return result.strip()
+
+class Inventory_Manager:
+    def __init__(self):
+        self.inventory = {}
+
+    def add_product(self, product_name, holding_cost, stockout_penalty):
+        if product_name in self.inventory:
+            raise ValueError(f"Product {product_name} already exists")
+        self.inventory[product_name] = Product(product_name, holding_cost, stockout_penalty)
+
+    def restock_product(self, product_name,quantity, cost_per_unit):
+        if product_name not in self.inventory:
+            raise ValueError(f"Product {product_name} not found")
+        self.inventory[product_name].ad_batch(quantity, cost_per_unit)
+
+    def simulate_demand(self,min_demand=0,max_demand=20):
+        simulated_demand = {}
+        for productname in self.inventory:
+            random_demand = random.randint(min_demand, max_demand)
+            simulated_demand[productname] = random_demand
+        return simulated_demand
+
+    def simulate_day(self,demand):
+        total_holding_cost = 0
+        total_stockout_penalty = 0
+        for productname in self.inventory:
+            demand_product = demand[productname]
+            total_stockout_penalty += self.inventory[productname].fulfill_demand(demand_product)
+            total_holding_cost += self.inventory[productname].calculate_holding_cost()
+        return (total_holding_cost, total_stockout_penalty)
+
+    def save_to_csv(self, filename):
+        output_file = open(filename, "w")
+        for productname in self.inventory:
+            for batch in self.inventory[productname].batches:
+                output_file.write(f"{productname},{str(batch.quantity)},{str(batch.cost_per_unit)}\n")
+        output_file.close()
+
+    def load_from_csv(self,filename):
+        if not os.path.exists(filename):
+
+        else:
+            output_file = open(filename, "r")
+            lijst = output_file.readlines()
+            for line in lijst:
+                details = [a.strip() for a in line.split(',')]
+                product_name = details[0]
+                quantity = int(details[1])
+                cost_per_unit = float(details[2])
+                self.inventory[product_name].add_batch(quantity, cost_per_unit)
+            output_file.close()
+
+    def print_inventory(self):
+        print("Current inventory")
+        for product in self.inventory:
+            print(product.__str__() + "\n")
