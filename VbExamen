@@ -1,0 +1,158 @@
+class Node:
+    def __init__(self, task_name,duration,priority):
+        self.task_name = task_name
+        self.duration = duration
+        self.priority = priority
+        self.next = None
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+        self.size = 0
+
+    def add_task(self, task_name, duration, priority):
+        newNode = Node(task_name,duration,priority)
+        if self.tail == None:
+            self.head = self.tail = newNode
+        else:
+            self.tail.next = newNode
+            self.tail = self.tail.next
+        self.size += 1
+
+    def remove_task(self, task_name):
+        if self.size == 0:
+            raise TypeError("list is empty")
+        current = self.head
+        previous = None
+
+        while current is not None and current.task_name != task_name:
+           previous = current
+           current = current.next
+        #als taskname de head is
+        if previous == None:
+            self.head = current.next
+            self.size -= 1
+            if self.head == None:
+                self.tail = None #de lijst is nu leeg
+        else:
+            previous.next = current.next
+            #als taskname de tail is
+            if previous.next == None:
+                self.tail = previous
+
+    def display_tasks(self):
+        current = self.head
+        while current != None:
+            print(current.task_name)
+            current = current.next
+
+    def find_tasks(self,task_name):
+        current = self.head
+        while current != None and current.task_name != task_name:
+            current = current.next
+        return (current.duration, current.priority)
+
+    def calculate_total_duration(self):
+        sum_duration = 0
+        current = self.head
+        while current != None:
+            sum_duration += current.duration
+            current = current.next
+
+    def read_tasks_from_csv(self,file_path):
+        inputFile = open(file_path,'r')
+        lijst = inputFile.readlines()
+        for line in lijst[1:]:
+
+            properties = [a.strip() for a in line.split(',')]
+            task_name = properties[0]
+            duration = properties[1]
+            priority = properties[2]
+            self.add_task(task_name, duration, priority)
+
+    def reorder_tasks_by_priority(self):
+        new_head = None
+        current = self.head
+        while current != None:
+            next = current.next #je moet current.next ergens kunnen opslaan voor straks naar de volgdende te gaan
+            current.next = None #je moet current loskoppelen van de lijst zodat je de lijst kan bewerken en alles meeveranderd
+            new_head = sorted_insert_by_priority(new_head,current)
+            current = next
+        #head en tail updaten:
+        self.head = new_head
+        tail = new_head
+        while tail.next != None:
+            tail = tail.next
+        self.tail = tail
+
+    def reorder_tasks_by_priority_duration(self):
+        new_head = None
+        current = self.head
+        while current != None:
+            next = current.next #je moet current.next ergens kunnen opslaan voor straks naar de volgdende te gaan
+            current.next = None #je moet current loskoppelen van de lijst zodat je de lijst kan bewerken en alles meeveranderd
+            new_head = sorted_insert_by_priority_duration(new_head,current)
+            current = next
+        #head en tail updaten:
+        self.head = new_head
+        tail = new_head
+        while tail.next != None:
+            tail = tail.next
+        self.tail = tail
+
+#krijgt een head en node en retourneert de juiste head (waar alle andere nodes aan gelinkt zijn)
+def sorted_insert_by_priority(head ,node):
+    #geval1: de lijst was leeg
+    if head == None:
+        node.next = None
+        return node
+
+    # geval2: de node moet vooraan de lijst komen (heeft hogere prioriteit of gelijk maar kortere duration dan head)
+    if head.priority < node.priority:
+        node.next = head
+        return node
+    #geval3: de node moet geinsert worden in de lijst
+    current = head
+    previous = None
+    while current.next != None:
+        #wanneer node voor current moet komen -> break
+        if current.next.priority > node.priority:
+            break
+        current = current.next
+    node.next = current.next
+    current.next = node
+    return head
+
+#krijgt een head en node en retourneert de juiste head (waar alle andere nodes aan gelinkt zijn)
+def sorted_insert_by_priority_duration(head, node):
+    #geval1: de lijst was leeg
+    if head == None:
+        node.next = None
+        return node
+
+    #geval2: de node moet vooraan de lijst komen (heeft hogere prioriteit of gelijk maar kortere duration dan head)
+    if (head.priority < node.priority or (head.priority == node.priority and head.duration > node.duration)):
+        node.next = head
+        return node
+
+    #geval3: de node moet geinsert worden in de lijst
+    current = head
+    previous = None
+    while current.next != None:
+        #wanneer node voor current moet komen -> break
+        if (current.next.priority > node.priority or (current.next.priority == node.priority and current.next.duration < node.duration)):
+            break
+        current = current.next
+    node.next = current.next
+    current.next = node
+    return head
+
+
+
+def main():
+    linkedList = LinkedList()
+    linkedList.read_tasks_from_csv('C:\\Users\\lilim\\Downloads\\tasks.csv')
+    linkedList.reorder_tasks_by_priority_duration()
+
+main()
